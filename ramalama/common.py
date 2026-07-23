@@ -126,6 +126,17 @@ def available(cmd: str) -> bool:
     return shutil.which(cmd) is not None
 
 
+@lru_cache(maxsize=1)
+def in_toolbox() -> bool:
+    return os.path.exists("/run/.toolboxenv")
+
+
+def engine_cmd(engine: str) -> list[str]:
+    if in_toolbox() and available("flatpak-spawn"):
+        return ["flatpak-spawn", "--host", engine]
+    return [engine]
+
+
 def quoted(arr) -> str:
     """Return string with quotes around elements containing spaces."""
     return " ".join(['"' + element + '"' if ' ' in element else element for element in arr])
@@ -201,17 +212,17 @@ def populate_volume_from_image(model: Transport, args: Namespace, output_filenam
     src = f"src-{vol_hash}"
 
     # Ensure volume exists
-    run_cmd([args.engine, "volume", "create", volume], ignore_stderr=True)
+    run_cmd([*engine_cmd(args.engine), "volume", "create", volume], ignore_stderr=True)
 
     # Fresh source container to export from
-    run_cmd([args.engine, "rm", "-f", src], ignore_stderr=True)
-    run_cmd([args.engine, "create", "--name", src, model.model])
+    run_cmd([*engine_cmd(args.engine), "rm", "-f", src], ignore_stderr=True)
+    run_cmd([*engine_cmd(args.engine), "create", "--name", src, model.model])
 
     try:
         # Stream whole rootfs -> extract only models/<basename>
-        export_cmd = [args.engine, "export", src]
+        export_cmd = [*engine_cmd(args.engine), "export", src]
         untar_cmd = [
-            args.engine,
+            *engine_cmd(args.engine),
             "run",
             "--rm",
             "-i",
@@ -239,7 +250,7 @@ def populate_volume_from_image(model: Transport, args: Namespace, output_filenam
             if rc_in != 0 or rc_out != 0:
                 raise subprocess.CalledProcessError(rc_in or rc_out, untar_cmd if rc_in else export_cmd)
     finally:
-        run_cmd([args.engine, "rm", "-f", src], ignore_stderr=True)
+        run_cmd([*engine_cmd(args.engine), "rm", "-f", src], ignore_stderr=True)
 
     return volume
 
@@ -311,7 +322,7 @@ def genname():
 @lru_cache
 def engine_version(engine: SUPPORTED_ENGINES | Path | str) -> SemVer:
     # Create manifest list for target with imageid
-    cmd_args = [str(engine), "version", "--format", "{{ .Client.Version }}"]
+    cmd_args = [*engine_cmd(str(engine)), "version", "--format", "{{ .Client.Version }}"]
     return SemVer.parse(run_cmd(cmd_args, encoding="utf-8").stdout.strip())
 
 
@@ -749,7 +760,7 @@ def ensure_image(conman: Optional[str], image: str, should_pull: bool = False, q
         image = f"{image}:latest"
 
     try:
-        if run_cmd([conman, "inspect", image], ignore_all=True):
+        if run_cmd([*engine_cmd(conman), "inspect", image], ignore_all=True):
             return image
     except Exception:
         pass
@@ -759,7 +770,7 @@ def ensure_image(conman: Optional[str], image: str, should_pull: bool = False, q
 
     pull_stdout = subprocess.DEVNULL if quiet else None
     try:
-        run_cmd([conman, "pull", image], stdout=pull_stdout, ignore_stderr=quiet)
+        run_cmd([*engine_cmd(conman), "pull", image], stdout=pull_stdout, ignore_stderr=quiet)
         return image
     except Exception:
         pass
@@ -771,7 +782,7 @@ def ensure_image(conman: Optional[str], image: str, should_pull: bool = False, q
     if base and base.startswith("quay.io/ramalama/"):
         latest = latest_tagged_image(base)
         try:
-            run_cmd([conman, "pull", latest], stdout=pull_stdout, ignore_stderr=quiet)
+            run_cmd([*engine_cmd(conman), "pull", latest], stdout=pull_stdout, ignore_stderr=quiet)
             return latest
         except Exception as e:
             raise ValueError(f"Failed to pull image {image} or {latest}: {e}")
