@@ -272,6 +272,7 @@ def test_post_parse_setup_model_input(
     assert input_args.model == input_args.MODEL
 
 
+<<<<<<< HEAD
 def _daemon_start_args(**overrides) -> Namespace:
     args = Namespace(
         container=True,
@@ -336,3 +337,34 @@ def test_daemon_start_container_publish_vm_backed_drops_loopback(monkeypatch):
     monkeypatch.setattr("ramalama.host_utils.platform.system", lambda: "Darwin")
     cmd = _capture_daemon_cmd(_daemon_start_args(host="127.0.0.1"))
     assert cmd[cmd.index("-p") + 1] == "1234:8080"
+
+@pytest.mark.parametrize(
+    "host, expected_publish",
+    [
+        ("127.0.0.1", "127.0.0.1:9090:8080"),
+        ("::1", "[::1]:9090:8080"),
+        ("::", "9090:8080"),
+        ("0.0.0.0", "0.0.0.0:9090:8080"),
+    ],
+)
+@mock.patch("ramalama.cli.exec_cmd")
+@mock.patch("ramalama.cli.ActiveConfig")
+def test_daemon_start_container_publishes_host(mock_config, mock_exec, host, expected_publish):
+    mock_config.return_value.host = "::"
+    args = Namespace(
+        container=True,
+        engine="podman",
+        store="/tmp/models",
+        pull="newer",
+        port="9090",
+        image="quay.io/ramalama/ramalama:latest",
+        host=host,
+    )
+
+    from ramalama.cli import daemon_start_cli
+
+    daemon_start_cli(args)
+
+    cmd = mock_exec.call_args.args[0]
+    assert cmd[cmd.index("-p") + 1] == expected_publish
+    assert cmd[cmd.index("--host") + 1] == "::"

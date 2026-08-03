@@ -1211,6 +1211,9 @@ def daemon_start_cli(args):
     if is_daemon_in_container:
         # If run inside a container, map the model store to the container internal directory
         daemon_model_store_dir = "/ramalama/models"
+        # Honor --host for the published host binding; the inner daemon listens on all
+        # interfaces inside the container.
+        publish = f"{format_bind_host_publish_prefix(args.host)}{args.port}:8080"
 
         # Honor the requested bind host (loopback by default) on the host-side
         # port publish; the daemon inside the container binds the wildcard below
