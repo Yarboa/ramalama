@@ -7,68 +7,75 @@ ramalama\-daemon - run a RamaLama REST server
 **ramalama daemon** [*options*] [start|run]
 
 ## DESCRIPTION
-Inspect the specified AI Model about additional information
-like the repository, its metadata and tensor information.
-
-## OPTIONS
-
-#### **--help**, **-h**
-Print usage message
+Run a RamaLama REST server (daemon) to manage and serve AI models.
 
 ## COMMANDS
 
 #### **start**
-pepares to run a new RamaLama REST server so it will be run either inside a RamaLama container or on the host
+Prepares to run a new RamaLama REST server so it will be run either inside a RamaLama container or on the host.
 
 #### **run**
-start a new RamaLama REST server
+Start a new RamaLama REST server.
+
+## OPTIONS
+
+
+[//]: # (BEGIN included file options/help.md)
+#### **--help**, **-h**
+Show this help message and exit
+
+[//]: # (END   included file options/help.md)
+
+
+[//]: # (BEGIN included file options/host.md)
+#### **--host**="127.0.0.1"
+IP address for the model server to listen on. Defaults to "127.0.0.1", so the
+served model is only reachable from the local machine. To expose it on the
+network, set this to a wildcard address such as "0.0.0.0" (IPv4) or "::"
+(dual-stack).
+
+[//]: # (END   included file options/host.md)
+
+#### **--image**=IMAGE
+OCI container image to run with the specified AI model. Defaults to the standard `quay.io/ramalama/ramalama` image. See **[ramalama(1)](ramalama.1.md)** for details on default and GPU-accelerated container images.
+
+
+[//]: # (BEGIN included file options/port.md)
+#### **--port**, **-p**
+port for AI Model server to listen on. It must be available. If not specified,
+a free port in the 8080-8180 range is selected, starting with 8080.
+
+The default can be overridden in the `ramalama.conf` file.
+
+[//]: # (END   included file options/port.md)
+
+
+[//]: # (BEGIN included file options/pull.md)
+#### **--pull**=*policy*
+Pull image policy. The default is **missing**.
+
+- **always**: Always pull the image and throw an error if the pull fails.
+- **missing**: Only pull the image when it does not exist in the local containers storage. Throw an error if no image is found and the pull fails.
+- **never**: Never pull the image but use the one from the local containers storage. Throw an error when no image is found.
+- **newer**: Pull if the image on the registry is newer than the one in the local containers storage. An image is considered to be newer when the digests are different. Comparing the time stamps is prone to errors. Pull errors are suppressed if a local image was found.
+
+[//]: # (END   included file options/pull.md)
 
 ## EXAMPLES
 
-Inspect the smollm:135m model for basic information
+Start a RamaLama REST server in a container:
 ```
-$ ramalama inspect smollm:135m
-smollm:135m
-   Path: /var/lib/ramalama/models/ollama/smollm:135m
-   Registry: ollama
-   Format: GGUF
-   Version: 3
-   Endianness: little
-   Metadata: 39 entries
-   Tensors: 272 entries
+$ ramalama daemon start
 ```
 
-Inspect the smollm:135m model for all information in json format
+Start a RamaLama REST server listening on port 8080 and accessible on all network interfaces:
 ```
-$ ramalama inspect smollm:135m --all --json
-{
-    "Name": "smollm:135m",
-    "Path": "/home/mengel/.local/share/ramalama/models/ollama/smollm:135m",
-    "Registry": "ollama",
-    "Format": "GGUF",
-    "Version": 3,
-    "LittleEndian": true,
-    "Metadata": {
-        "general.architecture": "llama",
-        "general.base_model.0.name": "SmolLM 135M",
-        "general.base_model.0.organization": "HuggingFaceTB",
-        "general.base_model.0.repo_url": "https://huggingface.co/HuggingFaceTB/SmolLM-135M",
-        ...
-    },
-    "Tensors": [
-        {
-            "dimensions": [
-                576,
-                49152
-            ],
-            "n_dimensions": 2,
-            "name": "token_embd.weight",
-            "offset": 0,
-            "type": 8
-        },
-        ...
-    ]
-}
+$ ramalama daemon start --host 0.0.0.0 --port 8080
+```
+
+Run a RamaLama REST server directly on the host:
+```
+$ ramalama daemon run --port 8080
 ```
 
 ## SEE ALSO
