@@ -164,7 +164,6 @@ Show this help message and exit
 
 
 [//]: # (BEGIN included file options/host.md)
-<<<<<<< HEAD
 #### **--host**="127.0.0.1"
 IP address for the model server to listen on. Defaults to "127.0.0.1", so the
 served model is only reachable from the local machine. To expose it on the

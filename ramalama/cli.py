@@ -559,7 +559,6 @@ def containers_parser(subparsers):
 
 
 def list_containers(args):
-
     containers = engine.containers(args)
     if len(containers) == 0:
         return
@@ -660,7 +659,6 @@ def human_readable_size(size):
 
 
 def _list_models_from_store(args):
-
     models = GlobalModelStore(args.store).list_models(engine=args.engine, show_container=args.container)
     shortnames = get_shortnames()
 
@@ -816,7 +814,6 @@ def pull_parser(subparsers):
 
 
 def pull_cli(args):
-
     model = New(args.MODEL, args)
     model.pull(args)
 
@@ -872,7 +869,6 @@ def _get_source_model(args, transport=None):
 
 
 def push_cli(args):
-
     target = args.SOURCE
     transport = None
     if not args.TARGET:
@@ -1211,9 +1207,6 @@ def daemon_start_cli(args):
     if is_daemon_in_container:
         # If run inside a container, map the model store to the container internal directory
         daemon_model_store_dir = "/ramalama/models"
-        # Honor --host for the published host binding; the inner daemon listens on all
-        # interfaces inside the container.
-        publish = f"{format_bind_host_publish_prefix(args.host)}{args.port}:8080"
 
         # Honor the requested bind host (loopback by default) on the host-side
         # port publish; the daemon inside the container binds the wildcard below

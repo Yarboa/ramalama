@@ -26,10 +26,11 @@ Show this help message and exit
 
 
 [//]: # (BEGIN included file options/host.md)
-#### **--host**="::"
-IP address for service to listen on. Defaults to the value from
-`ramalama.conf` (typically "::" on dual-stack systems, "0.0.0.0" on IPv4-only
-systems).
+#### **--host**="127.0.0.1"
+IP address for the model server to listen on. Defaults to "127.0.0.1", so the
+served model is only reachable from the local machine. To expose it on the
+network, set this to a wildcard address such as "0.0.0.0" (IPv4) or "::"
+(dual-stack).
 
 [//]: # (END   included file options/host.md)
 
